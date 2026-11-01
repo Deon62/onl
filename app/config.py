@@ -1,16 +1,21 @@
 """Application settings, loaded from environment variables (and a local .env file in development)."""
 
+import os
 from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlparse
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    environment: Literal["development", "test", "production"] = "development"
+    # Render sets RENDER=true on every service, so production is detected without an env var.
+    environment: Literal["development", "test", "production"] = Field(
+        default_factory=lambda: "production" if os.getenv("RENDER") else "development"
+    )
 
     # Supabase Postgres. Use the *Session pooler* connection string from Supabase (IPv4, port 5432).
     # A plain postgresql:// URL is accepted and converted to the asyncpg driver automatically.
@@ -26,7 +31,8 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:5180"
 
     # Public URL of this API, used to build Daraja callback URLs (phase 2).
-    public_base_url: str = "http://localhost:8000"
+    # On Render this defaults to the service's own URL (RENDER_EXTERNAL_URL).
+    public_base_url: str = Field(default_factory=lambda: os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000"))
 
     # Server-side secret mixed into API-key hashes, so a leaked database alone cannot be used to
     # verify guessed keys. Must be a long random value in production and never change afterwards.
