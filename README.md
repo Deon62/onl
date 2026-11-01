@@ -37,7 +37,7 @@ Only three environment variables:
 | `API_KEY_PEPPER` | 32+ random chars. Never change it after keys are issued |
 
 Production mode is detected from Render's `RENDER` variable, the public URL from `RENDER_EXTERNAL_URL`, and the Python
-version from `.python-version`. Add `ALLOWED_ORIGINS` once the dashboard is deployed. Use a paid instance, because the free tier
+version from `.python-version`. `ALLOWED_ORIGINS` defaults to `https://panel.oryne.org,http://localhost:5180`. Use a paid instance, because the free tier
 sleeps and would miss M-Pesa callbacks. Health check: `/health`.
 
 ## Conventions

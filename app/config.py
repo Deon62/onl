@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     supabase_jwt_audience: str = "authenticated"
 
     # Comma-separated origins allowed to call the dashboard API (the Oryne dashboard itself).
-    allowed_origins: str = "http://localhost:5180"
+    allowed_origins: str = "https://panel.oryne.org,http://localhost:5180"
 
     # Public URL of this API, used to build Daraja callback URLs (phase 2).
     # On Render this defaults to the service's own URL (RENDER_EXTERNAL_URL).
