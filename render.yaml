@@ -1,0 +1,27 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: oryne-api
+    runtime: python
+    plan: starter            # paid instance: the free tier sleeps, which would drop M-Pesa callbacks
+    region: frankfurt
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    preDeployCommand: uv run --no-dev alembic upgrade head
+    startCommand: uv run --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false          # set in the Render dashboard (Supabase Session pooler URL)
+      - key: SUPABASE_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false          # e.g. https://dashboard.oryne.network
+      - key: PUBLIC_BASE_URL
+        sync: false          # e.g. https://api.oryne.network
+      - key: API_KEY_PEPPER
+        generateValue: true
