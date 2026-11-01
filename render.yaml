@@ -17,3 +17,7 @@ services:
         sync: false          # https://<project-ref>.supabase.co
       - key: API_KEY_PEPPER
         generateValue: true
+      - key: SUPABASE_SECRET_KEY
+        sync: false          # sb_secret_... : creates merchant logins on approval
+      - key: RESEND_API_KEY
+        sync: false          # re_... : emails login details (optional)

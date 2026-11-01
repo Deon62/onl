@@ -52,6 +52,7 @@ class AccessRequest(Base):
     contact_name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(254), index=True)
     phone: Mapped[str] = mapped_column(String(16))
+    domain: Mapped[str] = mapped_column(String(253), default="", server_default="")
     volume: Mapped[str] = mapped_column(String(40))
     message: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(10), default=AccessRequestStatus.NEW)

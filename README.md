@@ -28,13 +28,17 @@ Later schema changes ship as Alembic migrations and run automatically on each Re
 
 ## Render
 
-Only three environment variables:
+Environment variables:
 
 | Key | Value |
 |---|---|
 | `DATABASE_URL` | Supabase → Connect → **Session pooler** string (with your DB password) |
 | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `API_KEY_PEPPER` | 32+ random chars. Never change it after keys are issued |
+| `SUPABASE_SECRET_KEY` | Supabase → API Keys → **Secret** key. Lets the API create merchant logins when you approve a request |
+| `RESEND_API_KEY` | Optional. Emails login details through [Resend](https://resend.com). Without it, copy the password from the dashboard |
+
+Emails are sent from `EMAIL_FROM` (default `Oryne <noreply@oryne.org>`). Verify `oryne.org` in Resend → Domains first.
 
 Production mode is detected from Render's `RENDER` variable, the public URL from `RENDER_EXTERNAL_URL`, and the Python
 version from `.python-version`. `ALLOWED_ORIGINS` defaults to `https://panel.oryne.org,http://localhost:5180`. Use a paid instance, because the free tier

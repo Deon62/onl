@@ -8,6 +8,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from app.auth import AdminUser, AdminWriter, Session
+from app.config import get_settings
 from app.errors import ApiError
 from app.models import ApiKey, Merchant, MerchantDomain
 from app.models.enums import MerchantStatus
@@ -23,8 +24,10 @@ from app.schemas.merchant import (
     MerchantStatusUpdate,
     MerchantUpdate,
 )
+from app.schemas.platform import LoginIssued, SendLogin
 from app.security import generate_api_key
 from app.services.audit import log_activity, notify
+from app.services.logins import email_login, issue_owner_login, owner_email
 from app.services.merchants import create_merchant, ensure_domains_free, ensure_email_free, get_merchant_or_404
 
 router = APIRouter(prefix="/v1/admin/merchants", tags=["admin: merchants"])
@@ -178,3 +181,16 @@ async def revoke_key(merchant_id: uuid.UUID, key_id: uuid.UUID, user: AdminWrite
         await session.commit()
         await session.refresh(key)
     return key
+
+
+@router.post("/{merchant_id}/login", response_model=LoginIssued)
+async def send_login(merchant_id: uuid.UUID, body: SendLogin, user: AdminWriter, session: Session, request: Request):
+    """Set a new password for the merchant's owner login (creating the login if there is none) and email it."""
+    merchant = await get_merchant_or_404(session, merchant_id)
+    email, name = await owner_email(session, merchant)
+    password = await issue_owner_login(session, merchant, email=email, name=name)
+    log_activity(session, user=user, request=request, action=f"Issued new login password for {email}", target=merchant.name, merchant_id=merchant.id)
+    await session.commit()
+    sent = await email_login(to=email, name=name, business=merchant.name, password=password, welcome=False) if body.send_email else None
+    return LoginIssued(email=email, password=password, login_url=get_settings().dashboard_url.rstrip("/") + "/login",
+                       email_sent=bool(sent and sent.sent), email_error=sent.error if sent else None)

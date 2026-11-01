@@ -7,13 +7,23 @@ from fastapi import APIRouter, Query, Request, status
 from sqlalchemy import func, select
 
 from app.auth import AdminUser, AdminWriter, SecretClient, Session
+from app.config import get_settings
 from app.errors import ApiError
 from app.models import AccessRequest, ActivityLog
-from app.models.enums import AccessRequestStatus, MerchantStatus
+from app.models.enums import AccessRequestStatus
 from app.schemas.common import Message, Page
-from app.schemas.merchant import MerchantCreate, MerchantOut
-from app.schemas.platform import AccessRequestCreate, AccessRequestDecision, AccessRequestOut, ActivityOut
+from app.schemas.merchant import MerchantOut
+from app.schemas.platform import (
+    AccessRequestCreate,
+    AccessRequestDecision,
+    AccessRequestOut,
+    ActivityOut,
+    ApproveAccessRequest,
+    ApprovedOut,
+    LoginIssued,
+)
 from app.services.audit import log_activity, notify
+from app.services.logins import email_login, issue_owner_login
 from app.services.merchants import create_merchant
 
 router = APIRouter(prefix="/v1", tags=["platform"])
@@ -37,7 +47,7 @@ async def request_access(body: AccessRequestCreate, session: Session, request: R
     req = AccessRequest(**body.model_dump(exclude={"website"}) | {"email": body.email.lower()})
     session.add(req)
     log_activity(session, actor=req.email, role="system", action="Requested merchant access", target=body.business, request=request)
-    notify(session, "admin", "New access request", f"{body.business} ({body.contact_name}) - expected volume {body.volume}.")
+    notify(session, "admin", "New access request", f"{body.business} ({body.domain}, {body.contact_name}) - expected volume {body.volume}.")
     await session.commit()
     return Message(message="Request received. We will review it and contact you.")
 
@@ -67,22 +77,33 @@ async def _pending_request(session, request_id: uuid.UUID) -> AccessRequest:
     return req
 
 
-@router.post("/admin/access-requests/{request_id}/approve", response_model=MerchantOut)
-async def approve_access_request(request_id: uuid.UUID, user: AdminWriter, session: Session, request: Request):
-    """Creates the merchant account (Pending Review until KYC is complete and it is activated)."""
+@router.post("/admin/access-requests/{request_id}/approve", response_model=ApprovedOut)
+async def approve_access_request(request_id: uuid.UUID, body: ApproveAccessRequest, user: AdminWriter, session: Session, request: Request):
+    """Create the merchant account the admin set up, give the requester an owner login, and email the details.
+
+    The password is returned once so the admin can copy it and send it manually if the email does not arrive.
+    """
     req = await _pending_request(session, request_id)
-    merchant = await create_merchant(session, MerchantCreate(
-        name=req.business, legal_name=req.business, email=req.email, phone=req.phone,
-        contact_name=req.contact_name, status=MerchantStatus.PENDING_REVIEW,
-    ))
+    merchant = await create_merchant(session, body.merchant)
+    name = body.merchant.contact_name or req.contact_name
+    password = await issue_owner_login(session, merchant, email=body.merchant.email, name=name)
     req.status = AccessRequestStatus.APPROVED
     req.merchant_id = merchant.id
     req.reviewed_by = user.email
     req.reviewed_at = datetime.now(UTC)
-    log_activity(session, user=user, request=request, action="Approved access request", target=req.business, merchant_id=merchant.id)
+    log_activity(session, user=user, request=request, action="Approved access request and created login",
+                 target=req.business, merchant_id=merchant.id)
+    notify(session, merchant.id, "Welcome to Oryne", "Your account is ready. Add your settlement account so we know where to send payouts.")
     await session.commit()
     await session.refresh(merchant)
-    return merchant
+
+    email = merchant.email
+    sent = await email_login(to=email, name=name, business=merchant.name, password=password, welcome=True) if body.send_email else None
+    return ApprovedOut(
+        merchant=MerchantOut.model_validate(merchant),
+        login=LoginIssued(email=email, password=password, login_url=get_settings().dashboard_url.rstrip("/") + "/login",
+                          email_sent=bool(sent and sent.sent), email_error=sent.error if sent else None),
+    )
 
 
 @router.post("/admin/access-requests/{request_id}/reject", response_model=AccessRequestOut)

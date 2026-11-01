@@ -38,6 +38,18 @@ class Settings(BaseSettings):
     # verify guessed keys. Must be a long random value in production and never change afterwards.
     api_key_pepper: str = "dev-only-pepper-change-me"
 
+    # Supabase secret key (sb_secret_... or legacy service_role). Lets the API create merchant logins when an access
+    # request is approved. Server-only: never put it in the dashboard.
+    supabase_secret_key: str | None = None
+
+    # Resend (https://resend.com) for login emails. Without a key, emails are skipped and the admin copies the
+    # password from the dashboard instead. EMAIL_FROM must use a domain verified in Resend.
+    resend_api_key: str | None = None
+    email_from: str = "Oryne <noreply@oryne.org>"
+
+    # Where merchants sign in (linked from emails).
+    dashboard_url: str = "https://panel.oryne.org"
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

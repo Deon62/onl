@@ -4,7 +4,8 @@ from datetime import datetime
 from pydantic import EmailStr, Field
 
 from app.models.enums import AccessRequestStatus, Role
-from app.schemas.common import KenyanPhone, Schema
+from app.schemas.common import Domain, KenyanPhone, Schema
+from app.schemas.merchant import MerchantCreate, MerchantOut
 
 
 class AccessRequestCreate(Schema):
@@ -12,6 +13,7 @@ class AccessRequestCreate(Schema):
     contact_name: str = Field(min_length=2, max_length=120)
     email: EmailStr
     phone: KenyanPhone = Field(min_length=1)
+    domain: Domain
     volume: str = Field(min_length=1, max_length=40)
     message: str = Field("", max_length=2000)
     # Honeypot: real users never fill this hidden field; bots usually do.
@@ -24,6 +26,7 @@ class AccessRequestOut(Schema):
     contact_name: str
     email: str
     phone: str
+    domain: str
     volume: str
     message: str
     status: AccessRequestStatus
@@ -55,3 +58,29 @@ class NotificationOut(Schema):
     body: str
     read: bool
     created_at: datetime
+
+
+class LoginIssued(Schema):
+    """A merchant owner's sign-in details. The password is returned once and never stored."""
+
+    email: str
+    password: str
+    login_url: str
+    email_sent: bool
+    email_error: str | None = None
+
+
+class ApproveAccessRequest(Schema):
+    """The merchant account to create, pre-filled from the request and adjusted by the admin."""
+
+    merchant: MerchantCreate
+    send_email: bool = True
+
+
+class ApprovedOut(Schema):
+    merchant: MerchantOut
+    login: LoginIssued
+
+
+class SendLogin(Schema):
+    send_email: bool = True
