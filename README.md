@@ -37,6 +37,7 @@ Environment variables:
 | `API_KEY_PEPPER` | 32+ random chars. Never change it after keys are issued |
 | `SUPABASE_SECRET_KEY` | Supabase → API Keys → **Secret** key. Lets the API create merchant logins when you approve a request |
 | `RESEND_API_KEY` | Optional. Emails login details through [Resend](https://resend.com). Without it, copy the password from the dashboard |
+| `CELCOM_API_KEY`, `CELCOM_PARTNER_ID`, `CELCOM_SHORTCODE` | Optional. [Celcom Africa](https://celcomafrica.com) SMS: texts the merchant's own phones (up to 3, set on the SMS page) for every payment received. Without them, alerts are skipped |
 
 Emails are sent from `EMAIL_FROM` (default `Oryne <noreply@oryne.org>`). Verify `oryne.org` in Resend → Domains first.
 

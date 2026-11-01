@@ -21,3 +21,9 @@ services:
         sync: false          # sb_secret_... : creates merchant logins on approval
       - key: RESEND_API_KEY
         sync: false          # re_... : emails login details (optional)
+      - key: CELCOM_API_KEY
+        sync: false          # SMS payment alerts to merchants (optional)
+      - key: CELCOM_PARTNER_ID
+        sync: false
+      - key: CELCOM_SHORTCODE
+        sync: false          # approved sender ID

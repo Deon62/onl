@@ -80,6 +80,15 @@ class MerchantStatusUpdate(Schema):
     reason: str = Field("", max_length=255)
 
 
+class PayoutAccountOut(Schema):
+    id: str
+    method: PayoutMethod
+    destination: str
+    details: dict
+    is_default: bool
+    created_at: str | None
+
+
 class MerchantOut(Schema):
     id: uuid.UUID
     code: str
@@ -100,16 +109,21 @@ class MerchantOut(Schema):
     sms_alerts: dict
     subscription: str
     domains: list[DomainOut]
+    payout_accounts: list[PayoutAccountOut] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
     @model_validator(mode="before")
     @classmethod
     def _from_model(cls, data):
-        # Build the nested pricing object from the flat ORM columns.
+        # Build the nested pricing object from the flat ORM columns, and list the payout accounts.
         if hasattr(data, "pricing_percent_bps"):
+            from app.services.payout_accounts import accounts_of
+
+            accounts, default_id = accounts_of(data)
             return {
-                **{k: getattr(data, k) for k in cls.model_fields if k != "pricing" and hasattr(data, k)},
+                **{k: getattr(data, k) for k in cls.model_fields if k not in ("pricing", "payout_accounts") and hasattr(data, k)},
+                "payout_accounts": [{**a, "is_default": a["id"] == default_id} for a in accounts],
                 "pricing": Pricing(
                     percent_bps=data.pricing_percent_bps, fixed_cents=data.pricing_fixed_cents,
                     min_cents=data.pricing_min_cents, max_cents=data.pricing_max_cents,
@@ -167,3 +181,33 @@ class SettlementUpdate(Schema):
     payout_destination: str = Field(min_length=1, max_length=120)
     payout_schedule: PayoutSchedule
     settlement: SettlementDetails
+
+
+class PayoutAccountCreate(Schema):
+    method: PayoutMethod
+    details: SettlementDetails
+    make_default: bool = False
+
+
+class PayoutScheduleUpdate(Schema):
+    payout_schedule: PayoutSchedule
+
+
+class SmsAlertsUpdate(Schema):
+    """The merchant's own phones that get an SMS each time a payment is received."""
+
+    enabled: bool
+    recipients: list[KenyanPhone] = Field(default_factory=list, max_length=3)
+
+    @model_validator(mode="after")
+    def _clean(self):
+        self.recipients = list(dict.fromkeys(r for r in self.recipients if r))
+        if self.enabled and not self.recipients:
+            raise ValueError("Add at least one phone number to receive alerts")
+        return self
+
+
+class SmsTestOut(Schema):
+    sent: list[str]
+    failed: list[str]
+    error: str | None

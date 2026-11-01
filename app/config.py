@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     resend_api_key: str | None = None
     email_from: str = "Oryne <noreply@oryne.org>"
 
+    # Celcom Africa SMS (https://isms.celcomafrica.com) for payment alerts sent to merchants' own phones.
+    # The shortcode is the approved sender ID. Without these, SMS alerts are skipped.
+    celcom_api_key: str | None = None
+    celcom_partner_id: str | None = None
+    celcom_shortcode: str | None = None
+
     # Where merchants sign in (linked from emails).
     dashboard_url: str = "https://panel.oryne.org"
 
