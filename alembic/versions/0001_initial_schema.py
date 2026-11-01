@@ -33,7 +33,7 @@ def upgrade() -> None:
     sa.Column('date', sa.Date(), nullable=False),
     sa.Column('status', sa.String(length=10), nullable=False),
     sa.Column('created_by', sa.String(length=254), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.CheckConstraint("status IN ('Paid', 'Pending', 'Overdue')", name=op.f('ck_expenses_status_valid')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_expenses'))
     )
@@ -61,8 +61,8 @@ def upgrade() -> None:
     sa.Column('settlement', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=False),
     sa.Column('sms_alerts', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=False),
     sa.Column('subscription', sa.String(length=40), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.CheckConstraint("payout_method IN ('M-Pesa', 'Till', 'Paybill', 'Bank transfer')", name=op.f('ck_merchants_payout_method_valid')),
     sa.CheckConstraint("payout_schedule IN ('Manual', 'Daily', 'Weekly', 'Monthly')", name=op.f('ck_merchants_payout_schedule_valid')),
     sa.CheckConstraint("status IN ('Pending Review', 'Active', 'Suspended')", name=op.f('ck_merchants_status_valid')),
@@ -77,7 +77,7 @@ def upgrade() -> None:
     sa.Column('title', sa.String(length=120), nullable=False),
     sa.Column('body', sa.String(length=500), nullable=False),
     sa.Column('read', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_notifications'))
     )
     op.create_index('ix_notifications_audience_created', 'notifications', ['audience', 'created_at'], unique=False)
@@ -85,7 +85,7 @@ def upgrade() -> None:
     sa.Column('key', sa.String(length=60), nullable=False),
     sa.Column('value', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=False),
     sa.Column('updated_by', sa.String(length=254), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.PrimaryKeyConstraint('key', name=op.f('pk_platform_config'))
     )
     op.create_table('access_requests',
@@ -101,7 +101,7 @@ def upgrade() -> None:
     sa.Column('merchant_id', sa.Uuid(), nullable=True),
     sa.Column('reviewed_by', sa.String(length=254), nullable=True),
     sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.CheckConstraint("status IN ('New', 'Approved', 'Rejected')", name=op.f('ck_access_requests_status_valid')),
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('fk_access_requests_merchant_id_merchants'), ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_access_requests'))
@@ -115,7 +115,7 @@ def upgrade() -> None:
     sa.Column('target', sa.String(length=255), nullable=False),
     sa.Column('merchant_id', sa.Uuid(), nullable=True),
     sa.Column('ip', sa.String(length=45), nullable=True),
-    sa.Column('at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('fk_activity_log_merchant_id_merchants'), ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_activity_log'))
     )
@@ -128,7 +128,7 @@ def upgrade() -> None:
     sa.Column('prefix', sa.String(length=24), nullable=False),
     sa.Column('key_hash', sa.String(length=64), nullable=False),
     sa.Column('created_by', sa.String(length=254), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.Column('last_used_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
     sa.CheckConstraint("kind IN ('secret', 'publishable')", name=op.f('ck_api_keys_kind_valid')),
@@ -142,7 +142,7 @@ def upgrade() -> None:
     sa.Column('merchant_id', sa.Uuid(), nullable=False),
     sa.Column('domain', sa.String(length=253), nullable=False),
     sa.Column('verified_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('fk_merchant_domains_merchant_id_merchants'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_merchant_domains')),
     sa.UniqueConstraint('domain', name=op.f('uq_merchant_domains_domain'))
@@ -171,9 +171,9 @@ def upgrade() -> None:
     sa.Column('sms_cost_cents', sa.BigInteger(), nullable=False),
     sa.Column('result_code', sa.Integer(), nullable=True),
     sa.Column('result_desc', sa.String(length=255), nullable=True),
-    sa.Column('initiated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('initiated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.Column('confirmed_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.CheckConstraint("attribution IN ('Matched', 'Unmatched', 'Manual')", name=op.f('ck_payments_attribution_valid')),
     sa.CheckConstraint("channel IN ('STK Push', 'Payment Link', 'Till')", name=op.f('ck_payments_channel_valid')),
     sa.CheckConstraint("status IN ('Initiated', 'Pending', 'Successful', 'Failed', 'Cancelled', 'Reversed', 'Refunded', 'Unmatched')", name=op.f('ck_payments_status_valid')),
@@ -202,7 +202,7 @@ def upgrade() -> None:
     sa.Column('provider_ref', sa.String(length=80), nullable=True),
     sa.Column('failure_reason', sa.String(length=255), nullable=True),
     sa.Column('approved_by', sa.String(length=254), nullable=True),
-    sa.Column('requested_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('requested_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
     sa.CheckConstraint("initiated_by IN ('Merchant', 'Scheduled', 'Admin')", name=op.f('ck_payouts_initiated_by_valid')),
     sa.CheckConstraint("method IN ('M-Pesa', 'Till', 'Paybill', 'Bank transfer')", name=op.f('ck_payouts_method_valid')),
@@ -219,7 +219,7 @@ def upgrade() -> None:
     sa.Column('full_name', sa.String(length=120), nullable=False),
     sa.Column('role', sa.String(length=20), nullable=False),
     sa.Column('merchant_id', sa.Uuid(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.CheckConstraint("role IN ('super_admin', 'ops', 'finance', 'merchant_owner', 'merchant_staff')", name=op.f('ck_profiles_role_valid')),
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('fk_profiles_merchant_id_merchants'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('user_id', name=op.f('pk_profiles')),
@@ -233,7 +233,7 @@ def upgrade() -> None:
     sa.Column('description', sa.String(length=255), nullable=False),
     sa.Column('amount_cents', sa.BigInteger(), nullable=False),
     sa.Column('date', sa.Date(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('fk_revenue_entries_merchant_id_merchants'), ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_revenue_entries'))
     )
@@ -246,7 +246,7 @@ def upgrade() -> None:
     sa.Column('method', sa.String(length=10), nullable=False),
     sa.Column('reference', sa.String(length=24), nullable=False),
     sa.Column('mpesa_receipt', sa.String(length=20), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('fk_sms_topups_merchant_id_merchants'), ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_sms_topups')),
     sa.UniqueConstraint('mpesa_receipt', name=op.f('uq_sms_topups_mpesa_receipt')),
@@ -258,7 +258,7 @@ def upgrade() -> None:
     sa.Column('kind', sa.String(length=20), nullable=False),
     sa.Column('payload', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=False),
     sa.Column('source_ip', sa.String(length=45), nullable=True),
-    sa.Column('received_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('received_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.Column('processed_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('payment_id', sa.Uuid(), nullable=True),
     sa.Column('error', sa.Text(), nullable=True),
@@ -278,7 +278,7 @@ def upgrade() -> None:
     sa.Column('available_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('memo', sa.String(length=255), nullable=False),
     sa.Column('created_by', sa.String(length=254), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.CheckConstraint("kind IN ('collection', 'fee', 'refund', 'fee_reversal', 'payout', 'payout_fee', 'payout_reversal', 'sms_topup', 'adjustment')", name=op.f('ck_ledger_entries_kind_valid')),
     sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('fk_ledger_entries_merchant_id_merchants'), ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['payment_id'], ['payments.id'], name=op.f('fk_ledger_entries_payment_id_payments'), ondelete='RESTRICT'),

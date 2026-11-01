@@ -147,3 +147,23 @@ class MeOut(Schema):
     email: str
     role: Role
     merchant: MerchantOut | None
+
+
+class SettlementDetails(Schema):
+    phone: KenyanPhone = ""
+    till: str = Field("", max_length=20, pattern=r"^\d*$")
+    paybill: str = Field("", max_length=20, pattern=r"^\d*$")
+    paybill_account: str = Field("", max_length=40)
+    bank_name: str = Field("", max_length=80)
+    bank_branch: str = Field("", max_length=80)
+    account_name: str = Field("", max_length=120)
+    account_number: str = Field("", max_length=40)
+
+
+class SettlementUpdate(Schema):
+    """Merchant's payout account (Settlement page)."""
+
+    payout_method: PayoutMethod
+    payout_destination: str = Field(min_length=1, max_length=120)
+    payout_schedule: PayoutSchedule
+    settlement: SettlementDetails

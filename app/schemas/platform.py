@@ -46,3 +46,12 @@ class ActivityOut(Schema):
     target: str
     merchant_id: uuid.UUID | None
     at: datetime
+
+
+class NotificationOut(Schema):
+    id: uuid.UUID
+    audience: str
+    title: str
+    body: str
+    read: bool
+    created_at: datetime
