@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import EmailStr, Field
 
-from app.models.enums import AccessRequestStatus, Role
+from app.models.enums import AccessRequestStatus, ExpenseStatus, Role
 from app.schemas.common import Domain, KenyanPhone, Schema
 from app.schemas.merchant import MerchantCreate, MerchantOut
 
@@ -84,3 +84,20 @@ class ApprovedOut(Schema):
 
 class SendLogin(Schema):
     send_email: bool = True
+
+
+class ExpenseIn(Schema):
+    """An Oryne operating cost. Amount is in cents (KES x 100)."""
+
+    category: str = Field(min_length=1, max_length=60)
+    description: str = Field(min_length=1, max_length=255)
+    amount_cents: int = Field(gt=0, le=100_000_000_000)
+    provider: str = Field("", max_length=120)
+    date: date
+    status: ExpenseStatus = ExpenseStatus.PAID
+
+
+class ExpenseOut(ExpenseIn):
+    id: uuid.UUID
+    created_by: str
+    created_at: datetime

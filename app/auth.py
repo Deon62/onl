@@ -107,6 +107,8 @@ def require_roles(*roles: Role):
 
 AdminUser = Annotated[CurrentUser, Depends(require_roles(*ADMIN_ROLES))]
 AdminWriter = Annotated[CurrentUser, Depends(require_roles(Role.SUPER_ADMIN, Role.OPS))]
+# Oryne's own books: super admins and finance.
+FinanceWriter = Annotated[CurrentUser, Depends(require_roles(Role.SUPER_ADMIN, Role.FINANCE))]
 SuperAdmin = Annotated[CurrentUser, Depends(require_roles(Role.SUPER_ADMIN))]
 
 

@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.errors import install_error_handlers
-from app.routers import admin_merchants, health, me, platform
+from app.routers import admin_merchants, expenses, health, me, platform
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("oryne")
@@ -70,7 +70,7 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type", "X-Api-Key", "Idempotency-Key"],
     )
-    for r in (health.router, me.router, admin_merchants.router, platform.router):
+    for r in (health.router, me.router, admin_merchants.router, platform.router, expenses.router):
         app.include_router(r)
     return app
 
